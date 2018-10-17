@@ -1,0 +1,25 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "qq2 project",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pascalpiper/microservice.git"
+  },
+  "keywords": [
+    "dahihida478"
+  ],
+  "author": "Pascal Piper",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pascalpiper/microservice/issues"
+  },
+  "homepage": "https://github.com/pascalpiper/microservice#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
