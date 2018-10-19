@@ -1,8 +1,11 @@
 var seneca = require('seneca')()
 var entities = require('seneca-entity')
+var kafka = require('kafka-node');
 var express = require('express');
 var bodyParser =require("body-parser");
 var app = express();
+
+// var client = new kafka.Client("http://qq2.ddnss.de:9092");
 
 seneca.use('mongo-store', {
   name: 'meinedatenbank',
@@ -12,8 +15,74 @@ seneca.use('mongo-store', {
 }).use(entities)
 
 //bodyParser
-app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.urlencoded({ extended: false })); // vorher
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// kafka
+
+//topics
+const topics = [
+    {
+        topic: "logging"
+    }
+];
+
+var sentMessage = [
+    {
+      service_name: "1_NodeJs+Seneca_1",
+      operation: "test",
+      message: "test",
+    }
+];
+
+var Producer = kafka.Producer,
+    client = new kafka.KafkaClient();
+    producer = new Producer(client);
+
+    producer.on('ready', function () {
+    console.log('Producer is ready');
+
+    //Test
+    payloads = [
+        { topic: 'logging', messages:sentMessage , partition: 0 }
+    ];
+    producer.send(payloads, function (err, data) {
+            // res.json(data);
+            console.log('producer sent');
+    });
+
+});
+
+var kafka = require('kafka-node'),
+    Consumer = kafka.Consumer,
+    client = new kafka.Client(),
+    consumer = new Consumer(client,
+        [{ topic: 'logging', offset: 0}],
+        {
+            autoCommit: false
+        }
+    );
+
+consumer.on('message', function (message) {
+  console.log('Consumer')
+    console.log(message);
+});
+
+consumer.on('error', function (err) {
+    console.log('Error:',err);
+})
+
+consumer.on('offsetOutOfRange', function (err) {
+    console.log('offsetOutOfRange:',err);
+})
+
+producer.on('error', function (err) {
+    console.log('Producer is in error state');
+    console.log(err);
+})
+
+
 
 //schlecht gelöst
 var studentID = 0;
@@ -77,6 +146,7 @@ foo_entity.list$( {id: '1'}, function(err,list){
 
 // get - respond list of all students
 app.get('/students', function (req, res) {
+  // res.json({greeting:'Kafka Consumer'}) // Kafka test
    var foo_entity = seneca.make('student')
    foo_entity.list$( {}, function(err,list){
      var i = 0;
@@ -95,6 +165,24 @@ app.get('/students', function (req, res) {
      });
      res.end(studentList);
    })
+
+   //Logging
+   sentMessage = [
+       {
+         service_name: '1_NodeJs+Seneca_1',
+         operation: 'get',
+         message: 'Alle Studenten ausgelesen',
+       }
+   ];
+
+   payloads = [
+       { topic: 'logging', messages:sentMessage , partition: 0 }
+   ];
+
+   producer.send(payloads, function (err, data) {
+            console.log('logging get ein Student')
+    });
+    //
 })
 
 // get - respond one student
@@ -121,6 +209,24 @@ app.get('/students/:id', function (req, res) {
     });
     res.end(studentList);
   })
+
+  //Logging
+  sentMessage = [
+      {
+        service_name: "1_NodeJs+Seneca_1",
+        operation: "get",
+        message: "Student ausgelesen",
+      }
+  ];
+
+  payloads = [
+      { topic: 'logging', messages:sentMessage , partition: 0 }
+  ];
+
+  producer.send(payloads, function (err, data) {
+           console.log('logging')
+   });
+   //
 })
 // res.end(student.nachname);
 // })
@@ -151,6 +257,25 @@ app.post('/students/', function (req, res) {
 
   console.log('post' +firstName+lastName+matriculationNumber+course,email);
   res.end('addStudent');
+
+  //Logging
+  sentMessage = [
+      {
+        service_name: "1_NodeJs+Seneca_1",
+        operation: "post",
+        message: "Student erstellt",
+      }
+  ];
+
+  payloads = [
+      { topic: 'logging', messages:sentMessage , partition: 0 }
+  ];
+
+  producer.send(payloads, function (err, data) {
+           console.log('logging')
+   });
+   //
+
 })
 
 // delete - delete a student
@@ -160,6 +285,25 @@ app.delete('/students/:id', function (req, res) {
   respond = 'Student' + student;
 })
 res.end('remove ' + req.params.id);
+
+//Logging
+sentMessage = [
+    {
+      service_name: "1_NodeJs+Seneca_1",
+      operation: "get",
+      message: "Student gelöscht",
+    }
+];
+
+payloads = [
+    { topic: 'logging', messages:sentMessage , partition: 0 }
+];
+
+producer.send(payloads, function (err, data) {
+         console.log('logging')
+ });
+ //
+
 })
 
 //PATCH - Student ändern
@@ -192,7 +336,25 @@ var email = req.body.email;
   })
 
   console.log('post' +firstName+lastName+matriculationNumber+course,email);
-  res.end('addStudent');
+  res.end('changeStudent');
+
+  //Logging
+  sentMessage = [
+      {
+        service_name: "1_NodeJs+Seneca_1",
+        operation: "get",
+        message: "Student geändert",
+      }
+  ];
+
+  payloads = [
+      { topic: 'logging', messages:sentMessage , partition: 0 }
+  ];
+
+  producer.send(payloads, function (err, data) {
+           console.log('logging')
+   });
+   //
 })
 
 
