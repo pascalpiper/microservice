@@ -20,6 +20,10 @@
   },
   "homepage": "https://github.com/pascalpiper/microservice#readme",
   "dependencies": {
-    "express": "^4.16.4"
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mongodb": "^3.1.8",
+    "seneca": "^3.7.0",
+    "seneca-entity": "^2.3.0"
   }
 }
